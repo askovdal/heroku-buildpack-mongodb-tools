@@ -30,8 +30,8 @@ mkdir -p "$APT_STATE_DIR/lists/partial"
 APT_OPTIONS="-o debug::nolocking=true -o dir::cache=$APT_CACHE_DIR -o dir::state=$APT_STATE_DIR"
 
 topic "Install Mongo Public Key"
-apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927
-echo "deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-3.2.list
+apt-key adv --keyserver keyserver.ubuntu.com --recv 7F0CEB10
+echo "deb http://repo.mongodb.org/apt/debian wheezy/mongodb-org/3.0 main" | tee /etc/apt/sources.list.d/mongodb-org-3.0.list
 
 topic "Updating apt caches"
 apt-get $APT_OPTIONS update | indent
