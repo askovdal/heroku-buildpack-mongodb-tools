@@ -1,40 +1,51 @@
 #!/usr/bin/env bash
-# bin/compile <build-dir> <cache-dir>
+# bin/compile <build-dir> <cache-dir> <env-dir>
 
-# fail fast
-set -e
+set -e   # fail fast
+# set -x # enable debugging
 
-# parse and derive params
+# Configure directories
 BUILD_DIR=$1
 CACHE_DIR=$2
-LP_DIR=`cd $(dirname $0); cd ..; pwd`
+ENV_DIR=$3
+BUILDPACK_DIR=`cd $(dirname $0); cd ..; pwd`
 
-function topic() {
-  echo "-----> $*"
-}
+# Load some convenience functions like topic(), echo(), and indent()
+source $BUILDPACK_DIR/bin/common.sh
 
-function indent() {
-  c='s/^/       /'
-  case $(uname) in
-    Darwin) sed -l "$c";;
-    *)      sed -u "$c";;
-  esac
-}
-
+# Apt settings
+APT_BUILD_DIR="$BUILD_DIR/.apt"
 APT_CACHE_DIR="$CACHE_DIR/apt/cache"
 APT_STATE_DIR="$CACHE_DIR/apt/state"
+APT_REPO_FILE="$BUILDPACK_DIR/etc/mongo.list"
 
+
+GPG_HOME_DIR="$BUILD_DIR/.gnupg"
+GPG_KEYRING_FILE="$BUILD_DIR/.apt/trusted.gpg"
+GPG_KEY_FILE="$BUILDPACK_DIR/etc/mongo.gpg"
+
+
+APT_OPTIONS="-o debug::nolocking=true -o Dir::Etc::Trusted=$GPG_KEYRING_FILE -o Dir::Etc::SourceList=$APT_REPO_FILE -o dir::cache=$APT_CACHE_DIR -o dir::state=$APT_STATE_DIR"
+
+# Ensure directories exists
+mkdir -p "$CACHE_DIR"
+mkdir -p "$APT_BUILD_DIR"
 mkdir -p "$APT_CACHE_DIR/archives/partial"
 mkdir -p "$APT_STATE_DIR/lists/partial"
+mkdir -p "$GPG_HOME_DIR"
 
-APT_OPTIONS="-o debug::nolocking=true -o dir::cache=$APT_CACHE_DIR -o dir::state=$APT_STATE_DIR"
-
-topic "Install Mongo Public Key"
-apt-key adv --keyserver keyserver.ubuntu.com --recv 7F0CEB10
-echo "deb http://repo.mongodb.org/apt/debian wheezy/mongodb-org/3.0 main" | tee /etc/apt/sources.list.d/mongodb-org-3.0.list
+topic "Adding GPG key"
+# This mimics the behavior of apt-key
+gpg --ignore-time-conflict --no-options --no-default-keyring --homedir $GPG_HOME_DIR --keyring $GPG_KEYRING_FILE --import $GPG_KEY_FILE | indent
 
 topic "Updating apt caches"
 apt-get $APT_OPTIONS update | indent
 
-topic "Installing Mongodump"
-apt-get $APT_OPTIONS -y --force-yes -d install --reinstall mongodb-org-tools=3.0.6 | indent
+topic "Fetching mongo tools"
+apt-get $APT_OPTIONS -y --force-yes -d install --reinstall --no-install-recommends mongodb-org-tools=3.0.6 | indent
+
+topic "Fetching deb packages"
+for DEB in $(ls -1 $APT_CACHE_DIR/archives/*.deb); do
+  topic "Installing $(basename $DEB)"
+  dpkg -x $DEB $BUILD_DIR/.apt/
+done
