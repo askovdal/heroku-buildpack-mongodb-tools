@@ -4,80 +4,80 @@
 set -eo pipefail
 
 # https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
-wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | apt-key add -
-echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.4.list
-apt-get update -y
-apt-get install -y mongodb-org-tools
+# wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | apt-key add -
+# echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+# apt-get update -y
+# apt-get install -y mongodb-org-tools
 
 
-# if [[ $(uname) == "Darwin" ]]; then
-#     sedf() { command sed -l "$@"; }
-# else
-#     sedf() { command sed -u "$@"; }
-# fi
+if [[ $(uname) == "Darwin" ]]; then
+    sedf() { command sed -l "$@"; }
+else
+    sedf() { command sed -u "$@"; }
+fi
 
-# indent() {
-#   sedf "s/^/       /"
-# }
+indent() {
+  sedf "s/^/       /"
+}
 
-# tolower() {
-#     echo "$@" | tr "[:upper:]" "[:lower:]"
-# }
+tolower() {
+    echo "$@" | tr "[:upper:]" "[:lower:]"
+}
 
-# header(){
-#   echo "-----> $1"
-# }
+header(){
+  echo "-----> $1"
+}
 
-# mkdir -p "$1" "$2"
-# build=$(cd "$1/" && pwd)
-# cache=$(cd "$2/" && pwd)
-# env_dir="$3"
-# arch=$(tolower $(uname -m))
+mkdir -p "$1" "$2"
+build=$(cd "$1/" && pwd)
+cache=$(cd "$2/" && pwd)
+env_dir="$3"
+arch=$(tolower $(uname -m))
 # if [[ $arch == "x86_64" ]]; then
 #     arch="amd64"
 # fi
-# plat=$(tolower $(uname))-$arch
+plat=$(tolower $(uname))-$arch
 
-# if [[ -e $build/bin && ! -d $build/bin ]]; then
-#     echo >&2 " !     File bin exists and is not a directory."
-#     exit 1
-# fi
+if [[ -e $build/bin && ! -d $build/bin ]]; then
+    echo >&2 " !     File bin exists and is not a directory."
+    exit 1
+fi
 
-# header "Downloading mongo-tools"
-# FILE="mongodb-database-tools_100.2.1_amd64.deb"
-# MONGO_TOOLS_VERSION="4.3"
-# MONGOCACHE="${cache:?}/mongo-tools"
-# if [[ ! -d "$MONGOCACHE" ]];then
-#   mkdir "$MONGOCACHE"
-# fi
+header "Downloading mongo-tools"
+FILE="mongodb-database-tools_100.2.1_amd64.deb"
+MONGO_TOOLS_VERSION="4.3"
+MONGOCACHE="${cache:?}/mongo-tools"
+if [[ ! -d "$MONGOCACHE" ]];then
+  mkdir "$MONGOCACHE"
+fi
 
-# echo 'before'
-# apt-cache search mongodb-org-tools
-# echo 'after'
+echo 'before'
+apt-cache search mongodb-org-tools
+echo 'after'
 
-# OUTPUT="$MONGOCACHE/${FILE}"
-# curl "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2004-${arch}-100.2.1.deb" > "$OUTPUT"
+OUTPUT="$MONGOCACHE/${FILE}"
+curl "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2004-${arch}-100.2.1.deb" > "$OUTPUT"
 
-# cat "${OUTPUT}"
+cat "${OUTPUT}"
 
-# header "Installing mongo-tools"
-# cd "${MONGOCACHE}"
-# # tar xvf $FILE works on darwin, on linux it must be "ar vx"
-# header "Decompressing mongo-tools deb"
-# ar vx "${FILE}" | indent
+header "Installing mongo-tools"
+cd "${MONGOCACHE}"
+# tar xvf $FILE works on darwin, on linux it must be "ar vx"
+header "Decompressing mongo-tools deb"
+ar vx "${FILE}" | indent
 
-# header "Decompressing data.tar.gz"
-# tar xvf "data.tar.xz" | indent
+header "Decompressing data.tar.gz"
+tar xvf "data.tar.xz" | indent
 
-# declare -a tools=("mongodump" "mongorestore" "mongoimport" "mongoexport")
+declare -a tools=("mongodump" "mongorestore" "mongoimport" "mongoexport")
 
-# for tool in "${tools[@]}"
-# do
-#   cp "usr/bin/$tool" "$build/bin/$tool"
-#   chmod +x "$build/bin/$tool"
-# done
+for tool in "${tools[@]}"
+do
+  cp "usr/bin/$tool" "$build/bin/$tool"
+  chmod +x "$build/bin/$tool"
+done
 
-# header "Cleaning up"
-# rm -rf "$MONGOCACHE"
+header "Cleaning up"
+rm -rf "$MONGOCACHE"
 
-# header "Mongo Tools Buildpack Complete"
+header "Mongo Tools Buildpack Complete"
