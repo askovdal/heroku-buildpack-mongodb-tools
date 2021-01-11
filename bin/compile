@@ -44,7 +44,9 @@ if [[ ! -d "$MONGOCACHE" ]];then
   mkdir "$MONGOCACHE"
 fi
 
+echo 'before'
 apt-cache search mongodb-org-tools
+echo 'after'
 
 OUTPUT="$MONGOCACHE/${FILE}"
 curl "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2004-${arch}-100.2.1.deb" > "$OUTPUT"
