@@ -1,56 +1,70 @@
-#!/usr/bin/env bash
-# bin/compile <build-dir> <cache-dir> <env-dir>
+#!/bin/bash
+# usage: bin/compile <build-dir> <cache-dir> <env-dir>
 
-set -e   # fail fast
-# set -x # enable debugging
+set -eo pipefail
 
-# Configure directories
-BUILD_DIR=$1
-CACHE_DIR=$2
-ENV_DIR=$3
-BUILDPACK_DIR=`cd $(dirname $0); cd ..; pwd`
+if [[ $(uname) == "Darwin" ]]; then
+    sedf() { command sed -l "$@"; }
+else
+    sedf() { command sed -u "$@"; }
+fi
 
-wget https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2004-x86_64-100.2.1.deb -O mongodb-database-tools.deb
-mkdir -p /var/cache/apt/archives/partial
-apt-get -y install ./mongodb-database-tools.deb
-rm ./mongodb-database-tools.deb
+indent() {
+  sedf "s/^/       /"
+}
 
-# # Load some convenience functions like topic(), echo(), and indent()
-# source $BUILDPACK_DIR/bin/common.sh
+tolower() {
+    echo "$@" | tr "[:upper:]" "[:lower:]"
+}
 
-# # Apt settings
-# APT_BUILD_DIR="$BUILD_DIR/.apt"
-# APT_CACHE_DIR="$CACHE_DIR/apt/cache"
-# APT_STATE_DIR="$CACHE_DIR/apt/state"
-# APT_REPO_FILE="$BUILDPACK_DIR/etc/mongo.list"
+header(){
+  echo "-----> $1"
+}
 
+mkdir -p "$1" "$2"
+build=$(cd "$1/" && pwd)
+cache=$(cd "$2/" && pwd)
+env_dir="$3"
+arch=$(tolower $(uname -m))
+if [[ $arch == "x86_64" ]]; then
+    arch="amd64"
+fi
+plat=$(tolower $(uname))-$arch
 
-# GPG_HOME_DIR="$BUILD_DIR/.gnupg"
-# GPG_KEYRING_FILE="$BUILD_DIR/.apt/trusted.gpg"
-# GPG_KEY_FILE="$BUILDPACK_DIR/etc/mongo.gpg"
+if [[ -e $build/bin && ! -d $build/bin ]]; then
+    echo >&2 " !     File bin exists and is not a directory."
+    exit 1
+fi
 
+header "Downloading mongo-mools"
+FILE="mongodb-database-tools_100.2.1_amd64.deb"
+MONGO_TOOLS_VERSION="4.3"
+MONGOCACHE="${cache:?}/mongo-tools"
+if [[ ! -d "$MONGOCACHE" ]];then
+  mkdir "$MONGOCACHE"
+fi
 
-# APT_OPTIONS="-o debug::nolocking=true -o Dir::Etc::Trusted=$GPG_KEYRING_FILE -o Dir::Etc::SourceList=$APT_REPO_FILE -o dir::cache=$APT_CACHE_DIR -o dir::state=$APT_STATE_DIR"
+OUTPUT="$MONGOCACHE/${FILE}"
+curl "http://repo.mongodb.org/apt/ubuntu/dists/groovy/mongodb-org/${MONGO_TOOLS_VERSION}/multiverse/binary-${arch}/${FILE}" > "$OUTPUT"
 
-# # Ensure directories exists
-# mkdir -p "$CACHE_DIR"
-# mkdir -p "$APT_BUILD_DIR"
-# mkdir -p "$APT_CACHE_DIR/archives/partial"
-# mkdir -p "$APT_STATE_DIR/lists/partial"
-# mkdir -p "$GPG_HOME_DIR"
+header "Installing mongo-tools"
+cd "${MONGOCACHE}"
+# tar xvf $FILE works on darwin, on linux it must be "ar vx"
+header "Decompressing mongo-mools deb"
+ar vx "${FILE}" | indent
 
-# topic "Adding GPG key"
-# # This mimics the behavior of apt-key
-# gpg --ignore-time-conflict --no-options --no-default-keyring --homedir $GPG_HOME_DIR --keyring $GPG_KEYRING_FILE --import $GPG_KEY_FILE | indent
+header "Decompressing data.tar.gz"
+tar xvf "data.tar.xz" | indent
 
-# topic "Updating apt caches"
-# apt-get $APT_OPTIONS update | indent
+declare -a tools=("mongodump" "mongorestore" "mongoimport" "mongoexport")
 
-# topic "Fetching mongo tools"
-# apt-get $APT_OPTIONS -y --force-yes -d install --reinstall --no-install-recommends mongodb-org-tools=3.0.6 | indent
+for tool in "${tools[@]}"
+do
+  cp "usr/bin/$tool" "$build/bin/$tool"
+  chmod +x "$build/bin/$tool"
+done
 
-# topic "Fetching deb packages"
-# for DEB in $(ls -1 $APT_CACHE_DIR/archives/*.deb); do
-#   topic "Installing $(basename $DEB)"
-#   dpkg -x $DEB $BUILD_DIR/.apt/
-# done
+header "Cleaning up"
+rm -rf "$MONGOCACHE"
+
+header "Mongo Tools Buildpack Complete"

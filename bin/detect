@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # bin/detect <build-dir>
+set -e
 
-echo "mongodump"
-exit 0
+build=$(cd "$1/" && pwd)
+echo "Mongo-tools"
