@@ -10,42 +10,44 @@ CACHE_DIR=$2
 ENV_DIR=$3
 BUILDPACK_DIR=`cd $(dirname $0); cd ..; pwd`
 
-# Load some convenience functions like topic(), echo(), and indent()
-source $BUILDPACK_DIR/bin/common.sh
+dpkg -l mongodb-database-tools
 
-# Apt settings
-APT_BUILD_DIR="$BUILD_DIR/.apt"
-APT_CACHE_DIR="$CACHE_DIR/apt/cache"
-APT_STATE_DIR="$CACHE_DIR/apt/state"
-APT_REPO_FILE="$BUILDPACK_DIR/etc/mongo.list"
+# # Load some convenience functions like topic(), echo(), and indent()
+# source $BUILDPACK_DIR/bin/common.sh
 
-
-GPG_HOME_DIR="$BUILD_DIR/.gnupg"
-GPG_KEYRING_FILE="$BUILD_DIR/.apt/trusted.gpg"
-GPG_KEY_FILE="$BUILDPACK_DIR/etc/mongo.gpg"
+# # Apt settings
+# APT_BUILD_DIR="$BUILD_DIR/.apt"
+# APT_CACHE_DIR="$CACHE_DIR/apt/cache"
+# APT_STATE_DIR="$CACHE_DIR/apt/state"
+# APT_REPO_FILE="$BUILDPACK_DIR/etc/mongo.list"
 
 
-APT_OPTIONS="-o debug::nolocking=true -o Dir::Etc::Trusted=$GPG_KEYRING_FILE -o Dir::Etc::SourceList=$APT_REPO_FILE -o dir::cache=$APT_CACHE_DIR -o dir::state=$APT_STATE_DIR"
+# GPG_HOME_DIR="$BUILD_DIR/.gnupg"
+# GPG_KEYRING_FILE="$BUILD_DIR/.apt/trusted.gpg"
+# GPG_KEY_FILE="$BUILDPACK_DIR/etc/mongo.gpg"
 
-# Ensure directories exists
-mkdir -p "$CACHE_DIR"
-mkdir -p "$APT_BUILD_DIR"
-mkdir -p "$APT_CACHE_DIR/archives/partial"
-mkdir -p "$APT_STATE_DIR/lists/partial"
-mkdir -p "$GPG_HOME_DIR"
 
-topic "Adding GPG key"
-# This mimics the behavior of apt-key
-gpg --ignore-time-conflict --no-options --no-default-keyring --homedir $GPG_HOME_DIR --keyring $GPG_KEYRING_FILE --import $GPG_KEY_FILE | indent
+# APT_OPTIONS="-o debug::nolocking=true -o Dir::Etc::Trusted=$GPG_KEYRING_FILE -o Dir::Etc::SourceList=$APT_REPO_FILE -o dir::cache=$APT_CACHE_DIR -o dir::state=$APT_STATE_DIR"
 
-topic "Updating apt caches"
-apt-get $APT_OPTIONS update | indent
+# # Ensure directories exists
+# mkdir -p "$CACHE_DIR"
+# mkdir -p "$APT_BUILD_DIR"
+# mkdir -p "$APT_CACHE_DIR/archives/partial"
+# mkdir -p "$APT_STATE_DIR/lists/partial"
+# mkdir -p "$GPG_HOME_DIR"
 
-topic "Fetching mongo tools"
-apt-get $APT_OPTIONS -y --force-yes -d install --reinstall --no-install-recommends mongodb-org-tools=3.0.6 | indent
+# topic "Adding GPG key"
+# # This mimics the behavior of apt-key
+# gpg --ignore-time-conflict --no-options --no-default-keyring --homedir $GPG_HOME_DIR --keyring $GPG_KEYRING_FILE --import $GPG_KEY_FILE | indent
 
-topic "Fetching deb packages"
-for DEB in $(ls -1 $APT_CACHE_DIR/archives/*.deb); do
-  topic "Installing $(basename $DEB)"
-  dpkg -x $DEB $BUILD_DIR/.apt/
-done
+# topic "Updating apt caches"
+# apt-get $APT_OPTIONS update | indent
+
+# topic "Fetching mongo tools"
+# apt-get $APT_OPTIONS -y --force-yes -d install --reinstall --no-install-recommends mongodb-org-tools=3.0.6 | indent
+
+# topic "Fetching deb packages"
+# for DEB in $(ls -1 $APT_CACHE_DIR/archives/*.deb); do
+#   topic "Installing $(basename $DEB)"
+#   dpkg -x $DEB $BUILD_DIR/.apt/
+# done
