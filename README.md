@@ -1,3 +1,9 @@
 # heroku-buildpack-mongodump
 
-Heroku Buildpack to install mongodump (it actually installs all the mongo tools but all we need is mongodump)
+Installs "mongodump" "mongorestore" "mongoimport" "mongoexport".
+
+```sh
+heroku buildpacks:add \
+  --index=1 \
+  https://github.com/kualibuild/heroku-buildpack-mongodump
+```
