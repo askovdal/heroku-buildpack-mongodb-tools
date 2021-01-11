@@ -11,7 +11,7 @@ ENV_DIR=$3
 BUILDPACK_DIR=`cd $(dirname $0); cd ..; pwd`
 
 wget https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2004-x86_64-100.2.1.deb -O mongodb-database-tools.deb
-apt install ./mongodb-database-tools.deb
+apt-get -y --force-yes install ./mongodb-database-tools.deb
 rm ./mongodb-database-tools.deb
 
 # # Load some convenience functions like topic(), echo(), and indent()
