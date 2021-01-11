@@ -45,7 +45,7 @@ if [[ ! -d "$MONGOCACHE" ]];then
 fi
 
 OUTPUT="$MONGOCACHE/${FILE}"
-curl "http://repo.mongodb.org/apt/ubuntu/dists/groovy/mongodb-org/${MONGO_TOOLS_VERSION}/multiverse/binary-${arch}/${FILE}" > "$OUTPUT"
+curl "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2004-${arch}-100.2.1.deb" > "$OUTPUT"
 
 header "Installing mongo-tools"
 cd "${MONGOCACHE}"
