@@ -24,13 +24,7 @@ header(){
 
 mkdir -p "$1" "$2"
 build=$(cd "$1/" && pwd)
-cache=$(cd "$2/" && pwd)
-env_dir="$3"
-arch=$(tolower $(uname -m))
-# if [[ $arch == "x86_64" ]]; then
-#     arch="amd64"
-# fi
-plat=$(tolower $(uname))-$arch
+arch=$(tolower "$(uname -m)")
 
 if [[ -e $build/bin && ! -d $build/bin ]]; then
     echo >&2 " !     File bin exists and is not a directory."
@@ -39,14 +33,13 @@ fi
 
 header "Downloading mongo-tools"
 FILE="mongodb-database-tools_100.2.1_amd64.deb"
-MONGO_TOOLS_VERSION="4.3"
 MONGOCACHE="${cache:?}/mongo-tools"
 if [[ ! -d "$MONGOCACHE" ]];then
   mkdir "$MONGOCACHE"
 fi
 
 OUTPUT="$MONGOCACHE/${FILE}"
-curl "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2004-${arch}-100.2.1.deb" > "$OUTPUT"
+curl "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2004-${arch}-100.7.0.deb" > "$OUTPUT"
 
 header "Installing mongo-tools"
 cd "${MONGOCACHE}"

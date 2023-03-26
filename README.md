@@ -1,9 +1,7 @@
-# heroku-buildpack-mongodump
+# heroku-buildpack-mongodb-tools
 
-Installs "mongodump" "mongorestore" "mongoimport" "mongoexport".
+Installs MongoDB Command Line Database Tools
 
 ```sh
-heroku buildpacks:add \
-  --index=1 \
-  https://github.com/kualibuild/heroku-buildpack-mongodump
+heroku buildpacks:add https://github.com/askovdal/heroku-buildpack-mongodb-tools
 ```
